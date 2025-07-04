@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Tic-Tac-Toe</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        font-family: Arial, sans-serif;
+        color: white;
+        flex-direction: column;
+    }
+    h1 {
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 8px rgba(0,255,255,0.7);
+    }
+    .mode-selection {
+        margin-bottom: 15px;
+    }
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        gap: 10px;
+    }
+    .cell {
+        width: 100px;
+        height: 100px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2.5rem;
+        cursor: pointer;
+        transition: background0.3s, transform 0.2s;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 0 10px rgba(0,255,255,0.4);
+    }
+    .cell:hover {
+        background: rgba(255,255,255,0.2);
+        transform: scale(1.05);
+    }
+    .winner {
+        color: #00ff88;
+        text-shadow: 0 0 10px #00ff88;
+    }
+    #message {
+        margin-top: 20px;
+        font-size: 1.5rem;
+    }
+    #resetBtn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background: #00c6ff;
+        color: white;
+        cursor: pointer;
+        transition: background0.3s;
+    }
+    #resetBtn:hover {
+        background: #0072ff;
+    }
+</style>
+</head>
+<body>
+<h1>🌟 Premium Tic-Tac-Toe</h1>
+<div class="mode-selection">
+    <label><input type="radio" name="mode" value="manual" checked> 2 Player Mode</label>
+    <label><input type="radio" name="mode" value="ai"> Play vs AI</label>
+</div>
+<div class="board" id="board"></div>
+<div id="message"></div>
+<button id="resetBtn">Play Again</button>
+
+<audio id="clickSound" src="https://www.soundjay.com/buttons/sounds/button-29.mp3"></audio>
+<audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+
+<script>
+    const board = document.getElementById("board");
+    const message = document.getElementById("message");
+    const resetBtn = document.getElementById("resetBtn");
+    const clickSound = document.getElementById("clickSound");
+    const winSound = document.getElementById("winSound");
+
+    let cells = [];
+    let currentPlayer = "X";
+    let gameActive = true;
+    let mode = "manual";
+
+    document.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.addEventListener('change', e => {
+            mode = e.target.value;
+            createBoard();
+        });
+    });
+
+    function createBoard() {
+        board.innerHTML = "";
+        cells = [];
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.addEventListener("click", () => handleCellClick(cell, i));
+            board.appendChild(cell);
+            cells.push("");
+        }
+        message.textContent = "Player X's Turn";
+        gameActive = true;
+        currentPlayer = "X";
+    }
+
+    function handleCellClick(cell, index) {
+        if (cells[index] !== "" || !gameActive) return;
+
+        clickSound.play();
+        cells[index] = currentPlayer;
+        cell.textContent = currentPlayer;
+        checkWinner();
+
+        if (gameActive) {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            message.textContent = `Player ${currentPlayer}'s Turn`;
+            if (mode === "ai" && currentPlayer === "O") {
+                setTimeout(aiMove, 500);
+            }
+        }
+    }
+
+    function aiMove() {
+        let available = cells.map((val, idx) => val === "" ? idx : null).filter(idx => idx !== null);
+        if (available.length === 0) return;
+        let randomIndex = available[Math.floor(Math.random() * available.length)];
+        const allCells = document.querySelectorAll(".cell");
+        handleCellClick(allCells[randomIndex], randomIndex);
+    }
+
+    function checkWinner() {
+        const winConditions = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+
+        for (const condition of winConditions) {
+            const [a, b, c] = condition;
+            if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
+                gameActive = false;
+                highlightWinner(a, b, c);
+                message.textContent = `🎉 Player ${cells[a]} Wins!`;
+                winSound.play();
+                return;
+            }
+        }
+
+        if (!cells.includes("")) {
+            gameActive = false;
+            message.textContent = "It's a Draw!";
+        }
+    }
+
+    function highlightWinner(a, b, c) {
+        const allCells = document.querySelectorAll(".cell");
+        allCells[a].classList.add("winner");
+        allCells[b].classList.add("winner");
+        allCells[c].classList.add("winner");
+    }
+
+    resetBtn.addEventListener("click", createBoard);
+
+    createBoard();
+</script>
+</body>
+</html>
